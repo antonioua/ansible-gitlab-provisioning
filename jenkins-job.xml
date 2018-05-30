@@ -24,7 +24,7 @@
 
 def url = &quot;https://registry.hub.docker.com/v1/repositories/gitlab/gitlab-ce/tags&quot;
 
-Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(&quot;172.29.50.100&quot;, 8080));
+Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(&quot;11129.50.100&quot;, 8080));
 
 URLConnection connection = new URL(url).openConnection(proxy);
 

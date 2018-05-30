@@ -37,12 +37,12 @@ Our current setup has vms as described in table below:
 
 | FQDN                                    | IP            |
 | --------------------------------------- | ------------- |
-| gitlab.mydomain.com                 | 172.29.49.12  |
-| gitlab-ci-runner01.mydomain.com | 10.148.2.80   |
-| gitlab-ci-runner02.mydomain.com | 10.148.0.215  |
-| gitlab-ci-runner03.mydomain.com| 10.148.2.109  |
-| gitlab-ci-runner04.mydomain.com | 10.148.2.110  |
-| gitlab-ci-cache.mydomain.com | 10.148.0.232  |
+| gitlab.mydomain.com                 | 1.1.1.1  |
+| gitlab-ci-runner01.mydomain.com | 1.1.1.2   |
+| gitlab-ci-runner02.mydomain.com | 1.1.1.3  |
+| gitlab-ci-runner03.mydomain.com| 1.1.1.4  |
+| gitlab-ci-runner04.mydomain.com | 1.1.1.5  |
+| gitlab-ci-cache.mydomain.com | 1.1.1.6  |
 
 Docker  host vm is accessible via port 2222 and it uses local pam authentication:
 ~~~bash
@@ -61,7 +61,7 @@ $ vi /etc/systemd/system/docker.service.d/docker.conf
 
 [Service]
 ExecStart="--insecure-registry gitlab.mydomain.com:4567"
-Environment="HTTP_PROXY=http://172.29.50.100:8080" "HTTPS_PROXY=http://172.29.50.100:8080" "NO_PROXY=*.mydomain.com"
+Environment="HTTP_PROXY=http://11129.50.100:8080" "HTTPS_PROXY=http://11129.50.100:8080" "NO_PROXY=*.mydomain.com"
 
 $ systemctl daemon-reload
 $ service docker restart
@@ -126,7 +126,7 @@ check_interval = 0
   token = "880788aacd70f4e62588c9b37fc7ee"
   executor = "docker"
   shell = "bash"
-  environment = ["http_proxy=http://172.29.50.100:8080", "https_proxy=http://172.29.50.100:8080", "no_proxy='127.0.0.1, localhost, *.mydomain.com'", "GIT_SSL_NO_VERIFY=true", "ad_user_for_external_api_calls=ta_jenkins_portal", "ad_password_for_external_api_calls=kXMkYYd11"]
+  environment = ["http_proxy=http://11129.50.100:8080", "https_proxy=http://11129.50.100:8080", "no_proxy='127.0.0.1, localhost, *.mydomain.com'", "GIT_SSL_NO_VERIFY=true", "ad_user_for_external_api_calls=ta_jenkins_portal", "ad_password_for_external_api_calls=kXMkYYd11"]
   [runners.docker]
     tls_verify = false
     image = "gitlab.mydomain.com:4567/po/ci-tests:latest"
@@ -515,7 +515,7 @@ $ ssh to jenkins-ci.mydomain.com
 $ cd /jobs/ansible_gitlab_provisioning/workspace
 
 Get all available versions
-$ export http_proxy=http://172.29.50.100:8080 https_proxy=http://172.29.50.100:8080
+$ export http_proxy=http://11129.50.100:8080 https_proxy=http://11129.50.100:8080
 $ curl -s https://registry.hub.docker.com/v1/repositories/gitlab/gitlab-ce/tags | python -mjson.tool | grep name | sort
 
 Modify file with list of versions to update

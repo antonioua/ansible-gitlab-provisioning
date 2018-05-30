@@ -9,11 +9,11 @@
 
 
 - name: apt:echo in container
-  command: docker exec {{ next_container }} bash -c '/bin/echo "Acquire::http::Proxy BBBhttp://172.29.50.100:8080BBB;" > /etc/apt/apt.conf'
+  command: docker exec {{ next_container }} bash -c '/bin/echo "Acquire::http::Proxy BBBhttp://11129.50.100:8080BBB;" > /etc/apt/apt.conf'
 
 
 - name: apt:echo in container
-  command: docker exec {{ next_container }} bash -c '/bin/echo "Acquire::https::Proxy BBBhttp://172.29.50.100:8080BBB;" >> /etc/apt/apt.conf'
+  command: docker exec {{ next_container }} bash -c '/bin/echo "Acquire::https::Proxy BBBhttp://11129.50.100:8080BBB;" >> /etc/apt/apt.conf'
 
 
 - name: apt:sed in container
