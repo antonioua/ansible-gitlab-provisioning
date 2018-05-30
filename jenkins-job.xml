@@ -1,0 +1,103 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <com.dabsquared.gitlabjenkins.connection.GitLabConnectionProperty plugin="gitlab-plugin@1.4.6">
+      <gitLabConnection></gitLabConnection>
+    </com.dabsquared.gitlabjenkins.connection.GitLabConnectionProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.25">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <org.biouno.unochoice.CascadeChoiceParameter plugin="uno-choice@1.5.3">
+          <name>GITLAB_VERSIONS</name>
+          <description></description>
+          <randomName>choice-parameter-7226381799969093</randomName>
+          <visibleItemCount>1</visibleItemCount>
+          <script class="org.biouno.unochoice.model.GroovyScript">
+            <secureScript plugin="script-security@1.29.1">
+              <script>import groovy.json.JsonSlurper
+
+def url = &quot;https://registry.hub.docker.com/v1/repositories/gitlab/gitlab-ce/tags&quot;
+
+Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(&quot;172.29.50.100&quot;, 8080));
+
+URLConnection connection = new URL(url).openConnection(proxy);
+
+InputStream inputStream = connection.getInputStream()
+
+def json = new JsonSlurper().parseText(inputStream.text )
+
+def list = []
+
+for (item in json.name) {
+  //println item
+  if (!item.contains(&quot;rc&quot;)) {
+    list.add(item)
+  }
+}
+
+//println list.getClass()
+//println list
+
+return list</script>
+              <sandbox>false</sandbox>
+            </secureScript>
+            <secureFallbackScript plugin="script-security@1.29.1">
+              <script></script>
+              <sandbox>false</sandbox>
+            </secureFallbackScript>
+          </script>
+          <projectName>ansible_gitlab_provisioning</projectName>
+          <parameters class="linked-hash-map"/>
+          <referencedParameters></referencedParameters>
+          <choiceType>PT_CHECKBOX</choiceType>
+          <filterable>true</filterable>
+        </org.biouno.unochoice.CascadeChoiceParameter>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@3.3.2">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <url>git@gitlab.mydomain.com:po/ansible-gitlab-provisioning.git</url>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>*/master</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <submoduleCfg class="list"/>
+    <extensions/>
+  </scm>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>chmod 0600 ./ssh_keys/*
+
+#echo $ver_arr
+
+ver_arr=$(echo ${GITLAB_VERSIONS} | tr &quot;,&quot; &quot; &quot;)
+
+for i in $ver_arr; do
+  echo $i
+  ansible-playbook -i hosts/hosts.ini gitlab_updating.yml -e &quot;hosti=gitlab.mydomain.com gitlab_img=$i&quot;
+done</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>

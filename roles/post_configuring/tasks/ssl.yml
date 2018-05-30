@@ -1,0 +1,20 @@
+---
+
+- name: Importing SSL certificate
+  copy:
+    src: "ssl/{{ hosti }}.crt"
+    dest: "/storage/docker_containers_data/gitlab-{{ gitlab_img }}/config/ssl/"
+    owner: root
+    group: root
+    mode: 0600
+    backup: no
+
+
+- name: Importing Certificate's key
+  copy:
+    src: "ssl/{{ hosti }}.key"
+    dest: "/storage/docker_containers_data/gitlab-{{ gitlab_img }}/config/ssl/"
+    owner: root
+    group: root
+    mode: 0600
+    backup: no

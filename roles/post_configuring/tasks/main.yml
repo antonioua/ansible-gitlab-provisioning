@@ -1,0 +1,12 @@
+---
+
+#- include: common.yml
+
+- include: ssl.yml
+
+- include: backup.yml
+
+- include: postfix.yml
+
+- include: healthcheck.yml
+

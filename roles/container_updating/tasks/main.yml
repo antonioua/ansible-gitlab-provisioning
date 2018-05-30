@@ -1,0 +1,107 @@
+---
+### Get current version
+- name: Gathering the current version of GitLab container
+  raw: docker ps --filter 'status=running' --format {{ '{{' }}.Names{{ '}}' }}
+  register: current_gitlab
+
+- name: Gathering the current img version  
+  raw: docker ps --filter 'status=running' --format {{ '{{' }}.Image{{ '}}' }}
+  register: current_img_gitlab
+
+- name: Get versions for matching
+  set_fact:
+    current: "{{ current_gitlab.stdout.strip(\n) }}"
+    cur_img: "{{ current_img_gitlab.stdout.strip(\n) }}"
+    next_img: "gitlab-{{ gitlab_img }}"
+    next_container: "gitlab-{{ gitlab_img }}"
+
+- name: Info about versions
+  debug: 
+    msg:
+      - "Current version: {{ current }}"
+      - "Specified image for update: {{ next_img }}" 
+
+### Interrupting upgrade
+- name: < STOP UPGRADING PROCESS >
+  fail:
+     msg:
+       - "Upgrading has been stopped because the wrong image is specified!!!"
+       - "You've tried to use the same or later image for update"
+  when: current >= next_img
+
+- name: < STOP UPGRADING PROCESS >
+  fail:
+    msg:
+      - "There is no running container"
+  when: 
+    - current == ""
+
+### Get the new image
+# there is an issue with  this ,module in ansible v2.4
+#- name: Pulling the specified image
+#  docker_image:
+#    name: "gitlab/gitlab-ce"
+#    tag: "{{ gitlab_img }}"
+#    state: present
+#    timeout: 1200
+
+- name: Pulling the specified image
+  command: "docker pull gitlab/gitlab-ce:{{ gitlab_img }}"
+
+- name: Stop current Gitlab
+  docker_container:
+    name: "{{ current }}"
+    state: stopped
+
+
+### Recreate the old container without autorestart option 
+- name: Recreating the old container with disabled autostart
+  docker_container:
+    name: "{{ current }}"
+    image: "{{ cur_img }}"
+    hostname: "{{ hosti }}"
+    restart_policy: no
+    recreate: yes
+    state: stopped
+    ports:
+      - "22:22"
+      - "80:80"
+      - "443:443"
+      - "4567:4567"
+    volumes:
+      - "/storage/docker_containers_data/{{ current }}/config:/etc/gitlab"
+      - "/storage/docker_containers_data/{{ current }}/logs:/var/log/gitlab"
+      - "/storage/docker_containers_data/{{ current }}/data:/var/opt/gitlab"
+      - /etc/localtime:/etc/localtime
+      - /storage/git-data:/mnt/git-data
+      - /git_backups:/var/opt/gitlab/backups
+      - /storage/gitlab-registry:/var/opt/gitlab/gitlab-rails/shared/registry
+
+
+### Copy data volumes
+- name: Mirroring data volumes of the current Gitlab for the new one
+  raw: "rsync -a --exclude 'backups' --exclude 'logs/' /storage/docker_containers_data/{{ current }}/ /storage/docker_containers_data/{{ next_img }}/"
+  register: mirroring
+
+
+### Start new container
+- name: Starting new container
+  docker_container:
+    name: "{{ next_img }}"
+    image: "gitlab/gitlab-ce:{{ gitlab_img }}"
+    hostname: "{{ hosti }}"
+    restart_policy: always
+    ports:
+      - "22:22"
+      - "80:80"
+      - "443:443"
+      - "4567:4567"
+    volumes:
+      - "/storage/docker_containers_data/{{ next_img }}/config:/etc/gitlab"
+      - "/storage/docker_containers_data/{{ next_img }}/logs:/var/log/gitlab"
+      - "/storage/docker_containers_data/{{ next_img }}/data:/var/opt/gitlab"
+      - /storage/git-data:/mnt/git-data
+      - /git_backups:/var/opt/gitlab/backups
+      - /etc/localtime:/etc/localtime
+      - /storage/gitlab-registry:/var/opt/gitlab/gitlab-rails/shared/registry
+  when: mirroring|success

@@ -1,0 +1,44 @@
+---
+
+- name: apt:mkdir
+  command: docker exec {{ next_container }} bash -c '/bin/mkdir -p /etc/apt/'
+
+
+- name: apt:touch in container
+  command: docker exec {{ next_container }} bash -c '/usr/bin/touch /etc/apt/apt.conf'
+
+
+- name: apt:echo in container
+  command: docker exec {{ next_container }} bash -c '/bin/echo "Acquire::http::Proxy BBBhttp://172.29.50.100:8080BBB;" > /etc/apt/apt.conf'
+
+
+- name: apt:echo in container
+  command: docker exec {{ next_container }} bash -c '/bin/echo "Acquire::https::Proxy BBBhttp://172.29.50.100:8080BBB;" >> /etc/apt/apt.conf'
+
+
+- name: apt:sed in container
+  command: docker exec {{ next_container }} bash -c '/bin/sed -e s/BBB/\"/g -i /etc/apt/apt.conf'
+
+
+- name: apt:update in container
+  command: docker exec {{ next_container }} bash -c '/usr/bin/apt-get update -y'
+
+
+- name: apt:install mailutils
+  command: docker exec {{ next_container }} bash -c 'DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get install mailutils -y'
+
+
+- name: apt:install postfix
+  command: docker exec {{ next_container }} bash -c 'DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get install postfix -y'
+
+
+- name: apt:update postfix configuration in container
+  command: docker exec {{ next_container }} bash -c "/bin/sed -i /etc/postfix/main.cf -e 's/^relayhost = $/relayhost = smtp-relay.mydomain.com/g'"
+
+
+- name: Execute restart of postfix daemon in docker container to apply new configuration
+  command: docker exec {{ next_container }} bash -c '/usr/sbin/service postfix restart'
+
+
+- name: Enable postfix as service
+  command: docker exec {{ next_container }} bash -c '/bin/systemctl enable postfix; /usr/sbin/update-rc.d postfix defaults; /usr/sbin/update-rc.d postfix enable'

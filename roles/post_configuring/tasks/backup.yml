@@ -1,0 +1,33 @@
+---
+
+### Post_configuring ###
+
+- name: Deleting old cron jobs
+  cron:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    - Gitlab configs backup and rotate
+    - Gitlab rake backup
+
+### Doing backup from the docker host because of absent cron service in a container
+
+- name: Adding cron job for backup Gitlab configs from docker host and rotate old backups
+  cron:
+    name: "Gitlab configs backup and rotate"
+    minute: "5"
+    hour: "1"
+    job: 'docker exec -i gitlab-{{ gitlab_img }} /bin/bash -c "/bin/tar czf /var/opt/gitlab/backups/gitlab_backup_CONFIGS-`date "+\%Y_\%m_\%d"`.tar.gz /etc/gitlab && /usr/bin/find /var/opt/gitlab/backups/ -type f -iname "gitlab_backup_CONFIGS-*" -mtime +5 | xargs rm -f"'
+
+- name: Adding cron job for Gitlab rake backup from docker host
+  cron:
+    name: "Gitlab rake backup"
+    minute: "10"
+    hour: "1"
+    job: "docker exec -t gitlab-{{ gitlab_img }} gitlab-rake gitlab:backup:create SKIP=artifacts,builds,uploads,registry"
+
+
+### Configuring gitlab.rb
+
+#- name: Backup keeping time configuring
+# ........................

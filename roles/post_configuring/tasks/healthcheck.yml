@@ -1,0 +1,28 @@
+---
+
+- name: Wait until Gitlab is available
+  command: curl -s -o /dev/null -I -w "%{http_code}"  https://gitlab.mydomain.com/help
+  register: response_headers
+  until: response_headers.stdout.find("200") != -1
+  retries: 60
+  delay: 10
+
+
+- name: Get response from Gitlab
+  uri:
+    url: "https://gitlab.mydomain.com/help"
+    return_content: yes
+    method: GET
+  register: response
+
+
+#  - name: "Show response content"
+#    debug:
+#      msg:
+#        - "{{ response.content }}"
+
+
+- name: Fail if 'GitLab Community Edition' is not in the response of https://gitlab.mydomain.com/help
+  fail:
+  when: "'GitLab Community Edition' not in response.content"
+

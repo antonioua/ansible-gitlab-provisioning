@@ -1,0 +1,46 @@
+---
+- hosts: "{{ hosti }}"
+
+  gather_facts: no
+  sudo: True
+
+  vars:
+    proxy_env:
+      http_proxy: http://172.29.50.100:8080
+      https_proxy: http://172.29.50.100:8080
+
+#  environment: '{{ proxy_env }}'
+
+#  vars:
+#    help_var: "Use --extra-vars to define name of image\n
+#              Examples for run updating container: \n
+#		      ansible-playbook -c local /etc/ansible/playbooks/gitlab_updating.yml -e 'img=9.0.5-ce.0'"
+
+  pre_tasks:
+
+#    - name: Get info about available tags for GitLab images
+#      raw: wget -q https://registry.hub.docker.com/v1/repositories/gitlab/gitlab-ce/tags -O - | python -mjson.tool | grep name | awk -F':' '{print $2}'
+#      register: images_name_get
+
+#    - name: Show available versions for GitLab
+#      debug: var=images_name_get.stdout_lines
+
+#    - name: HELP
+#      debug: msg={{ help_var.split('\n') }}
+
+#    - name: Think twice before updating
+#      pause: prompt="Press Enter to continue. Press Ctrl+c and then 'a' to abort"
+
+    - name: install python-simplejson
+      raw:  export http_proxy={{ proxy_env.http_proxy }} https_proxy={{ proxy_env.https_proxy }}; yum -y install python-simplejson docker-python.x86_64
+      tags: ["bootstrap"]
+
+    - name: install docker-py
+      raw:  export http_proxy={{ proxy_env.http_proxy }} https_proxy={{ proxy_env.https_proxy }}; pip install docker-py
+      tags: ["bootstrap"]
+
+
+  roles:
+    - { role: container_updating, tags: container_updating }
+    - { role: post_configuring, tags: post_configuring }
+
